@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use core::mem::size_of;
 
 #[repr(packed)]
@@ -60,6 +62,7 @@ static mut POINTER: Pointer = Pointer {
 };
 
 extern "C" {
+    #[allow(improper_ctypes)]
     fn load_gdt(ptr: *const Pointer);
 }
 global_asm!(include_str!("gdt_s.S"));
@@ -69,7 +72,7 @@ pub fn init() {
     unsafe {
         let count = ENTRY_COUNT - 2;
         POINTER.offset = ENTRIES.as_ptr() as usize;
-        POINTER.size = (count * 8 - 1) as u16;
+        POINTER.size = (count * size_of::<Entry>() - 1) as u16;
         load_gdt(&POINTER);
     }
 }

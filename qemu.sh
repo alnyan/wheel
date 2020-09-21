@@ -17,7 +17,9 @@ IMAGE="build/image.fat32"
 
 dd if=/dev/zero of=${IMAGE} bs=1M count=64
 mkfs.vfat -F32 ${IMAGE}
-mcopy -i ${IMAGE} build/yboot2/target/x86_64-unknown-uefi/debug/yboot2.efi ::yboot2.efi
+mmd -i ${IMAGE} ::EFI
+mmd -i ${IMAGE} ::EFI/Boot
+mcopy -i ${IMAGE} build/yboot2/target/x86_64-unknown-uefi/debug/yboot2.efi ::EFI/Boot/bootx64.efi
 mcopy -i ${IMAGE} target/x86_64-unknown-none/debug/osdev-amd64 ::kernel.elf
 
 qemu-system-x86_64 \

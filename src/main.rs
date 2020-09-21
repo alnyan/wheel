@@ -14,17 +14,10 @@ mod boot;
 #[no_mangle]
 pub extern "C" fn kernel_main() {
     // Cleanup terminal colors after UEFI
-    print!("\x1b[0m");
+    print!("\x1b[0m\x1b[2J\x1B[0;0f");
 
     arch::x86::gdt::init();
     arch::x86::idt::init();
-
-    let addr = (4 * 1024 * 1024 * 1024usize);
-    unsafe {
-        let mut ptr = addr as *mut u32;
-
-        *ptr = 1234;
-    }
 
     println!("Survived");
 
