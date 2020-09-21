@@ -29,5 +29,31 @@ macro_rules! print {
 
 #[macro_export]
 macro_rules! println {
-    ($($args:tt)*) => (print!("{}\n", format_args!($($args)*)))
+    ()              => (print!("\n"));
+    ($($args:tt)*)  => (print!("{}\n", format_args!($($args)*)))
+}
+
+// TODO: offsets
+unsafe fn dump_line(base: *const u8, count: usize) {
+    for i in 0 .. 16 {
+        if i < count {
+            print!("{:02x}", *(base.offset(i as isize)));
+        } else {
+            print!("  ");
+        }
+        if i % 2 != 0 {
+            print!(" ");
+        }
+    }
+    println!();
+}
+
+pub unsafe fn dump(ptr: usize, count: usize) {
+    let full_lines = count / 16;
+    for i in 0 .. full_lines {
+        dump_line((ptr + i * 16) as *const _, 16);
+    }
+    if (count % 16) != 0 {
+        dump_line((ptr + full_lines * 16) as *const _, count % 16);
+    }
 }

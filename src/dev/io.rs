@@ -8,8 +8,6 @@ pub trait ReadIo<T> {
     fn read(&self) -> T;
 }
 
-pub trait Io<T>: ReadIo<T> + WriteIo<T> {}
-
 pub struct PortIo<T> {
     port: u16,
     _data: PhantomData<T>
