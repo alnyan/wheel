@@ -1,0 +1,17 @@
+[package]
+name = "osdev-amd64"
+version = "0.1.0"
+authors = ["Mark <alnyan@airmail.cc>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+spin = "0.5.2"
+
+[dependencies.yboot2-proto]
+git = "https://git.alnyan.me/yggdrasil/yboot2-proto.git"
+features = ["kernel-protocol"]
+
+[build-dependencies]
+cc = "1.0.60"
