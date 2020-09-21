@@ -1,6 +1,6 @@
 use yboot2_proto::{
     ProtoV1,
-    KernelProtocol,
+    Magic,
     v1::CMDLINE_SIZE,
     MemoryMapInfo,
     ElfTables,
@@ -11,7 +11,7 @@ use yboot2_proto::{
 global_asm!(".section .boot, \"wa\", %progbits");
 #[no_mangle]
 #[link_section = ".boot"]
-pub static BOOT_DATA: ProtoV1 = ProtoV1 {
+static BOOT_DATA: ProtoV1 = ProtoV1 {
     hdr:                yboot2_proto::Header {
         kernel_magic: ProtoV1::KERNEL_MAGIC,
         loader_magic: [0; 8]
@@ -41,3 +41,7 @@ pub static BOOT_DATA: ProtoV1 = ProtoV1 {
 
     cmdline: [0; CMDLINE_SIZE]
 };
+
+pub fn boot_data() -> &'static ProtoV1 {
+    &BOOT_DATA
+}
