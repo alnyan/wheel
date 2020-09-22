@@ -4,8 +4,8 @@
 
 load_gdt:
     lgdt (%rdi)
-    //movw $0x28, %ax
-    //ltr %ax
+    movw $0x28, %ax
+    ltr %ax
 
     mov %rsp, %rdx
     mov $0x10, %rax

@@ -23,6 +23,15 @@ impl<'a, T: SerialDevice> fmt::Write for SerialWriter<'a, T> {
     }
 }
 
+fn write_fmt_raw(args: fmt::Arguments) -> fmt::Result {
+    use core::fmt::Write;
+    let _lock = IrqDisable::new();
+    let mut wr = SerialWriter {
+        port: &mut *COM1.lock()
+    };
+    wr.write_fmt(args)
+}
+
 pub fn write_fmt(level: Level, file: &str, line: u32, args: fmt::Arguments) -> fmt::Result {
     use core::fmt::Write;
     let _lock = IrqDisable::new();
@@ -91,15 +100,15 @@ macro_rules! println {
 unsafe fn dump_line(base: *const u8, count: usize) {
     for i in 0 .. 16 {
         if i < count {
-            print!("{:02x}", *(base.offset(i as isize)));
+            write_fmt_raw(format_args!("{:02x}", *(base.offset(i as isize))));
         } else {
-            print!("  ");
+            write_fmt_raw(format_args!("  "));
         }
         if i % 2 != 0 {
-            print!(" ");
+            write_fmt_raw(format_args!(" "));
         }
     }
-    println!();
+    write_fmt_raw(format_args!("\n"));
 }
 
 pub unsafe fn dump(ptr: usize, count: usize) {

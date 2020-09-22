@@ -13,6 +13,25 @@ struct Entry64 {
 }
 
 #[repr(packed)]
+struct Tss {
+    _res0:      u32,
+    rsp0:       u64,
+    rsp1:       u64,
+    rsp2:       u64,
+    _res1:      u64,
+    ist1:       u64,
+    ist2:       u64,
+    ist3:       u64,
+    ist4:       u64,
+    ist5:       u64,
+    ist6:       u64,
+    ist7:       u64,
+    _res2:      u64,
+    _res3:      u16,
+    iopb_base:  u16
+}
+
+#[repr(packed)]
 struct Pointer {
     size:   u16,
     offset: usize
@@ -34,6 +53,7 @@ impl Entry64 {
     }
 }
 
+const ACC_AC: u8 = 1 << 0;
 const ACC_RW: u8 = 1 << 1;
 const ACC_EX: u8 = 1 << 3;
 const ACC_S:  u8 = 1 << 4;
@@ -56,6 +76,23 @@ static mut ENTRIES: [Entry; ENTRY_COUNT] = [
     Entry::new(0, 0, 0, 0),                             // Empty TSS
     Entry::new(0, 0, 0, 0),                             // Empty TSS
 ];
+static TSS: Tss = Tss {
+    _res0:      0,
+    rsp0:       0,
+    rsp1:       0,
+    rsp2:       0,
+    _res1:      0,
+    ist1:       0,
+    ist2:       0,
+    ist3:       0,
+    ist4:       0,
+    ist5:       0,
+    ist6:       0,
+    ist7:       0,
+    _res2:      0,
+    _res3:      0,
+    iopb_base:  0
+};
 static mut POINTER: Pointer = Pointer {
     offset: 0,
     size: 0
@@ -70,9 +107,16 @@ global_asm!(include_str!("gdt_s.S"));
 pub fn init() {
     // TODO: TSS
     unsafe {
-        let count = ENTRY_COUNT - 2;
+        let tss_ptr = &TSS as *const _ as usize;
+        ENTRIES[ENTRY_COUNT - 2] = Entry::new((tss_ptr & 0xFFFFFFFF) as u32,
+                                              (size_of::<Tss>() - 1) as u32,
+                                              FLAG_LONG,
+                                              ACC_PR | ACC_AC | ACC_EX);
+        let tss_upper = &mut ENTRIES[ENTRY_COUNT - 1] as *mut _ as *mut u64;
+        *tss_upper = ((tss_ptr >> 32) & 0xFFFFFFFF) as u64;
+
         POINTER.offset = ENTRIES.as_ptr() as usize;
-        POINTER.size = (count * size_of::<Entry>() - 1) as u16;
+        POINTER.size = (ENTRY_COUNT * size_of::<Entry>() - 1) as u16;
         load_gdt(&POINTER);
     }
 }
