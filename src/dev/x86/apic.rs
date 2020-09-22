@@ -20,7 +20,6 @@ pub enum Reg {
 }
 
 impl LocalApic {
-    // TODO: limits?
     #[inline(always)]
     fn write(&mut self, reg: Reg, value: u32) {
         unsafe { write_volatile((self.address + reg as usize) as *mut u32, value); }

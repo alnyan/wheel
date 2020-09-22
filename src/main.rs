@@ -1,4 +1,4 @@
-#![feature(llvm_asm, global_asm, const_in_array_repeat_expressions, const_fn)]
+#![feature(llvm_asm, global_asm, const_in_array_repeat_expressions, const_fn, array_map)]
 
 #![no_main]
 #![no_std]
@@ -26,7 +26,9 @@ pub extern "C" fn kernel_main() {
 
     mem::phys::init(&boot.memory_map);
 
+    // Initialize local APIC
     dev::x86::apic::init(0xFEE00000 + 0xFFFFFF0000000000);
+    dev::x86::acpi::init(Some(boot.rsdp as usize));
 
     println!("Survived");
 
@@ -36,6 +38,7 @@ pub extern "C" fn kernel_main() {
 }
 
 #[panic_handler]
-fn panic_handler(_pi: &core::panic::PanicInfo) -> ! {
+fn panic_handler(pi: &core::panic::PanicInfo) -> ! {
+    println!("{}", pi);
     loop {}
 }
