@@ -71,6 +71,5 @@ extern "C" fn do_irq_0() {
 
 #[no_mangle]
 extern "C" fn do_irq(vec: VectorNumber) {
-    println!("do_irq {}", vec);
     unsafe {&mut IRQ[vec as usize]}.handle();
 }

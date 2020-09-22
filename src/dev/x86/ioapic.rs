@@ -67,6 +67,8 @@ impl IoApic {
         for i in 0 .. self.limit {
             self.set_masked(i, true);
         }
+
+        self.write_redir(1, 0, 33);
     }
 }
 

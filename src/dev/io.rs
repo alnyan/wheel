@@ -13,22 +13,15 @@ pub struct PortIo<T> {
     _data: PhantomData<T>
 }
 
-//pub struct MemoryIo<T> {
-//    address: usize,
-//    _data: PhantomData<T>
-//}
-
 impl ReadIo<u8> for PortIo<u8> {
     fn read(&self) -> u8 {
-        let mut val: u8;
-        unsafe { llvm_asm!("inb $0, $1":"={al}"(val):"{dx}"(self.port)); }
-        val
+        unsafe { inb(self.port) }
     }
 }
 
 impl WriteIo<u8> for PortIo<u8> {
     fn write(&mut self, value: u8) {
-        unsafe { llvm_asm!("outb $0, $1"::"{al}"(value),"{dx}"(self.port)); }
+        unsafe { outb(self.port, value); }
     }
 }
 
@@ -39,4 +32,16 @@ impl<T> PortIo<T> {
             _data: PhantomData
         }
     }
+}
+
+#[inline(always)]
+pub unsafe fn inb(port: u16) -> u8 {
+    let mut val: u8;
+    llvm_asm!("inb $1, $0":"={al}"(val):"{dx}"(port));
+    val
+}
+
+#[inline(always)]
+pub unsafe fn outb(port: u16, byte: u8) {
+    llvm_asm!("outb $0, $1"::"{al}"(byte),"{dx}"(port));
 }

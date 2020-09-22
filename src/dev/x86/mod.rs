@@ -7,4 +7,6 @@ pub mod ioapic;
 pub use ioapic::IoApic;
 pub mod acpi;
 
+pub mod ps2;
+
 pub mod irq;

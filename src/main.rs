@@ -37,6 +37,7 @@ pub extern "C" fn kernel_main() {
     // Initialize local APIC
     dev::x86::apic::init(virtualize(0xFEE00000));
     dev::x86::acpi::init(Some(boot.rsdp as usize));
+    dev::x86::ps2::init();
 
     println!("Survived");
 
