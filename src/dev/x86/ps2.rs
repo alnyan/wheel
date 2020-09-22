@@ -35,9 +35,10 @@ impl irq::IrqHandler for Keyboard {
 const MASTER_STATUS:    u16 = 0x64;
 const MASTER_DATA:      u16 = 0x60;
 
+#[allow(dead_code)]
 static mut MASTER: Keyboard = Keyboard {};
 
 pub fn init() {
     // Bind irq
-    irq::add(1, unsafe {&mut MASTER});
+    //irq::add(1, unsafe {&mut MASTER});
 }

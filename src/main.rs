@@ -39,6 +39,11 @@ pub extern "C" fn kernel_main() {
     dev::x86::acpi::init(Some(boot.rsdp as usize));
     dev::x86::ps2::init();
 
+    info!("Test info\n");
+    warn!("Test warning\n");
+    error!("Test error\n");
+    fatal!("Test fatal\n");
+
     println!("Survived");
 
     loop {
