@@ -5,7 +5,8 @@ set -e
 IMAGE="build/image.fat32"
 CARGO_ARGS=""
 QEMU_ARGS=""
-KERNEL="target/x86_64-unknown-none/debug/osdev-amd64"
+NAME="Wheel"
+KERNEL="target/x86_64-unknown-none/debug/$NAME"
 
 if [ "$QEMU_DEBUG" = 1 ]; then
     QEMU_ARGS="$QEMU_ARGS -S"
@@ -13,7 +14,7 @@ fi
 
 if [ "$RELEASE" = 1 ]; then
     CARGO_ARGS="$CARGO_ARGS --release"
-    KERNEL="target/x86_64-unknown-none/release/osdev-amd64"
+    KERNEL="target/x86_64-unknown-none/release/$NAME"
 fi
 
 mkdir -p build

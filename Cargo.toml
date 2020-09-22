@@ -1,5 +1,5 @@
 [package]
-name = "osdev-amd64"
+name = "Wheel"
 version = "0.1.0"
 authors = ["Mark <alnyan@airmail.cc>"]
 edition = "2018"
