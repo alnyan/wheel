@@ -40,6 +40,20 @@ pub extern "C" fn kernel_main() {
     dev::x86::ps2::init();
 
     println!("Survived");
+    let addr = unsafe { kernel_main as *const fn() -> () as usize };
+    println!("Virt: 0x{:016x}", addr);
+
+    // Retain existing PML4
+    let cr3 = arch::x86::regs::cr3::read();
+    unsafe {
+        mem::KERNEL = Some(&mut *(virtualize(cr3) as *mut _));
+    }
+
+    if let Some(phys) = mem::translate(unsafe { mem::KERNEL.as_mut() }.unwrap(), addr, None) {
+        println!("Phys: 0x{:016x}", phys);
+    } else {
+        println!("Translation fault");
+    }
 
     loop {
         unsafe { llvm_asm!("sti; hlt"); }
