@@ -20,7 +20,7 @@ SECTIONS {
     }
 
     .bss : AT(ADDR(.bss) - KERNEL_OFFSET) ALIGN(4K) {
-        *(.bss)
+        *(.bss*)
         *(COMMON)
     }
     _kernel_end = .;
