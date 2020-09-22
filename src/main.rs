@@ -1,4 +1,4 @@
-#![feature(llvm_asm, global_asm, const_in_array_repeat_expressions)]
+#![feature(llvm_asm, global_asm, const_in_array_repeat_expressions, const_fn)]
 
 #![no_main]
 #![no_std]
@@ -10,6 +10,7 @@ pub mod debug;
 pub mod dev;
 pub mod arch;
 pub mod mem;
+pub mod sync;
 mod boot;
 
 #[no_mangle]
@@ -25,9 +26,13 @@ pub extern "C" fn kernel_main() {
 
     mem::phys::init(&boot.memory_map);
 
+    dev::x86::apic::init(0xFEE00000 + 0xFFFFFF0000000000);
+
     println!("Survived");
 
-    loop {}
+    loop {
+        unsafe { llvm_asm!("sti; hlt"); }
+    }
 }
 
 #[panic_handler]

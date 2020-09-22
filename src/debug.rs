@@ -1,4 +1,5 @@
 use crate::dev::{x86::COM1, SerialDevice};
+use crate::sync::IrqDisable;
 use core::fmt;
 
 struct SerialWriter<'a, T: SerialDevice> {
@@ -16,6 +17,7 @@ impl<'a, T: SerialDevice> fmt::Write for SerialWriter<'a, T> {
 
 pub fn write_fmt(args: fmt::Arguments) -> fmt::Result {
     use core::fmt::Write;
+    let _lock = IrqDisable::new();
     let mut wr = SerialWriter {
         port: &mut *COM1.lock()
     };

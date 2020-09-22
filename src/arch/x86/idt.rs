@@ -1,9 +1,10 @@
 #![allow(dead_code)]
 
+use crate::dev::irq;
 use core::mem::size_of;
 
 #[repr(packed)]
-struct Entry {
+pub struct Entry {
     base_lo:    u16,
     selector:   u16,
     zero0:      u8,
@@ -57,6 +58,7 @@ static mut POINTER: Pointer = Pointer {
 
 extern "C" {
     static exception_vectors: [usize; 32];
+    static irq_vectors: [usize; irq::MAX_VECTOR];
 }
 global_asm!(include_str!("idt_s.S"));
 
@@ -65,6 +67,13 @@ pub fn init() {
         unsafe {
             ENTRIES[i] = Entry::new(exception_vectors[i] as usize,
                                     0x08, FLAG_PR | FLAG_INT32);
+        }
+    }
+
+    for i in 0 .. irq::MAX_VECTOR {
+        unsafe {
+            ENTRIES[i + 32] = Entry::new(irq_vectors[i] as usize,
+                                         0x08, FLAG_PR | FLAG_INT32)
         }
     }
 
