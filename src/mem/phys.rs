@@ -1,5 +1,6 @@
 use yboot2_proto::MemoryMapInfo;
 use core::mem::size_of;
+use crate::KERNEL_OFFSET;
 
 const PHYS_MAX_PAGES: usize = 1024 * 1024;
 
@@ -67,7 +68,7 @@ extern "C" {
 }
 
 fn kernel_end() -> usize {
-    (unsafe { &_kernel_end as *const _ as usize }) - 0xFFFFFF0000000000
+    (unsafe { &_kernel_end as *const _ as usize }) - KERNEL_OFFSET
 }
 
 fn is_usable(page: PhysAddr) -> bool {

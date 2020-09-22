@@ -1,3 +1,5 @@
+use crate::virtualize;
+
 pub mod base;
 pub use base::*;
 pub mod tables;
@@ -16,7 +18,7 @@ fn init_rsdp(addr: usize) {
         panic!("ACPI root pointer is invalid");
     }
 
-    let rsdt = unsafe { &*((rsdp.rsdt_address as usize + 0xFFFFFF0000000000) as *const Rsdt) };
+    let rsdt = unsafe { &*(virtualize(rsdp.rsdt_address as usize) as *const Rsdt) };
     assert!(rsdt.is_valid());
 
     for item in rsdt.iter() {
@@ -41,7 +43,7 @@ pub fn init(from_loader: Option<usize>) {
 
         for rec in madt.iter() {
             if let MadtRecord::IoApic(id, addr, base) = rec {
-                ioapic::init(addr as usize + 0xFFFFFF0000000000);
+                ioapic::init(virtualize(addr as usize));
             }
         }
     }

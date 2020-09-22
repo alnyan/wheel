@@ -5,6 +5,14 @@
 
 extern crate yboot2_proto;
 
+pub const KERNEL_OFFSET: usize = 0xFFFFFF0000000000;
+
+#[inline(always)]
+pub fn virtualize(phys: usize) -> usize {
+    assert!(phys < 0x100000000);    // Because above 4GiB isn't mapped yet
+    phys + KERNEL_OFFSET
+}
+
 #[macro_use]
 pub mod debug;
 pub mod dev;
@@ -27,7 +35,7 @@ pub extern "C" fn kernel_main() {
     mem::phys::init(&boot.memory_map);
 
     // Initialize local APIC
-    dev::x86::apic::init(0xFEE00000 + 0xFFFFFF0000000000);
+    dev::x86::apic::init(virtualize(0xFEE00000));
     dev::x86::acpi::init(Some(boot.rsdp as usize));
 
     println!("Survived");
