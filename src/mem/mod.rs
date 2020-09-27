@@ -4,6 +4,7 @@ use core::marker::PhantomData;
 use crate::virtualize;
 
 pub mod phys;
+pub mod heap;
 
 /// Page table entry is valid
 pub const PAGE_PRESENT: u64     = 1 << 0;

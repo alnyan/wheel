@@ -6,7 +6,8 @@ const PHYS_MAX_PAGES: usize = 1024 * 1024;
 
 pub (crate) type PhysAddr = usize;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
+#[repr(u32)]
 pub enum PageUsage {
     Reserved,
     Available,
@@ -23,9 +24,38 @@ struct Memory {
     pages: [Page; PHYS_MAX_PAGES]
 }
 
+impl Page {
+    pub fn is_used(&self) -> bool {
+        self.usage != PageUsage::Available
+    }
+}
+
 static mut MEMORY: Option<&'static mut Memory> = None;
 static mut START_INDEX: usize = 0xFFFFFFFFFFFFFFFF;
 static mut END_INDEX: usize = 0;
+
+pub fn alloc_contiguous(usage: PageUsage, count: usize) -> Option<PhysAddr> {
+    for i in unsafe { START_INDEX .. END_INDEX - count } {
+        let mut fail = false;
+        for j in 0 .. count {
+            if get_page(i + j).is_used() {
+                fail = true;
+                break;
+            }
+        }
+
+        if !fail {
+            for j in 0 .. count {
+                let mut page = get_page(i + j);
+                assert!(page.refcount == 0);
+                page.usage = usage.clone();
+            }
+
+            return Some(i * 4096);
+        }
+    }
+    None
+}
 
 pub fn alloc_page(usage: PageUsage) -> Option<PhysAddr> {
     assert!(usage != PageUsage::Reserved && usage != PageUsage::Available);
@@ -44,12 +74,24 @@ pub fn alloc_page(usage: PageUsage) -> Option<PhysAddr> {
 
 pub fn free_page(phys: PhysAddr) {
     assert!(phys >= unsafe { START_INDEX } && phys <= unsafe { END_INDEX });
+    let page = get_page_at(phys);
+    if !page.is_used() {
+        panic!("Double free error");
+    }
+    if page.refcount == 0 {
+        panic!("Refcount == 0");
+    }
+    page.usage = PageUsage::Available;
 }
 
-pub fn get_page(phys: PhysAddr) -> &'static mut Page {
-    let num = phys >> 12;
+pub fn get_page_at(addr: PhysAddr) -> &'static mut Page {
+    get_page(addr / 4096)
+}
+
+#[inline(always)]
+pub fn get_page(num: usize) -> &'static mut Page {
     assert!(num < PHYS_MAX_PAGES);
-    return &mut unsafe {MEMORY.as_mut()}.unwrap().pages[num];
+    &mut unsafe {MEMORY.as_mut()}.unwrap().pages[num]
 }
 
 fn place_struct(at: PhysAddr) {
@@ -136,7 +178,7 @@ pub fn init(mmap: &MemoryMapInfo) {
                     }
                 }
 
-                let page_struct = get_page(page);
+                let page_struct = get_page(index);
                 // Even if mmap pages are crossed now, don't care - mmap is no longer
                 // needed
                 page_struct.usage = PageUsage::Available;

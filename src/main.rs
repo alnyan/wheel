@@ -1,25 +1,33 @@
-#![feature(llvm_asm, global_asm, const_in_array_repeat_expressions, const_fn, array_map)]
-
+#![feature(
+    llvm_asm,
+    global_asm,
+    const_in_array_repeat_expressions,
+    const_fn,
+    alloc_error_handler,
+)]
 #![no_main]
 #![no_std]
 
+extern crate alloc;
 extern crate yboot2_proto;
 
 pub const KERNEL_OFFSET: usize = 0xFFFFFF0000000000;
 
 #[inline(always)]
 pub fn virtualize(phys: usize) -> usize {
-    assert!(phys < 0x100000000);    // Because above 4GiB isn't mapped yet
+    assert!(phys < 0x100000000); // Because above 4GiB isn't mapped yet
     phys + KERNEL_OFFSET
 }
 
+use alloc::boxed::Box;
+
 #[macro_use]
 pub mod debug;
-pub mod dev;
 pub mod arch;
+mod boot;
+pub mod dev;
 pub mod mem;
 pub mod sync;
-mod boot;
 
 #[no_mangle]
 pub extern "C" fn kernel_main() {
@@ -33,30 +41,20 @@ pub extern "C" fn kernel_main() {
     arch::x86::idt::init();
 
     mem::phys::init(&boot.memory_map);
+    mem::heap::init_somewhere(1024 * 1024 * 4);
 
     // Initialize local APIC
     dev::x86::apic::init(virtualize(0xFEE00000));
     dev::x86::acpi::init(Some(boot.rsdp as usize));
     dev::x86::ps2::init();
 
-    println!("Survived");
-    let addr = unsafe { kernel_main as *const fn() -> () as usize };
-    println!("Virt: 0x{:016x}", addr);
-
-    // Retain existing PML4
-    let cr3 = arch::x86::regs::cr3::read();
-    unsafe {
-        mem::KERNEL = Some(&mut *(virtualize(cr3) as *mut _));
-    }
-
-    if let Some(phys) = mem::translate(unsafe { mem::KERNEL.as_mut() }.unwrap(), addr, None) {
-        println!("Phys: 0x{:016x}", phys);
-    } else {
-        println!("Translation fault");
-    }
+    let x = Box::new(1234);
+    println!("Alive: {}!", x);
 
     loop {
-        unsafe { llvm_asm!("sti; hlt"); }
+        unsafe {
+            llvm_asm!("sti; hlt");
+        }
     }
 }
 
