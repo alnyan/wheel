@@ -5,7 +5,7 @@ set -e
 IMAGE="build/image.fat32"
 CARGO_ARGS=""
 QEMU_ARGS=""
-NAME="Wheel"
+NAME="wheel"
 KERNEL="target/x86_64-unknown-none/debug/$NAME"
 
 if [ "$QEMU_DEBUG" = 1 ]; then
