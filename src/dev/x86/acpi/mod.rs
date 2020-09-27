@@ -42,7 +42,7 @@ pub fn init(from_loader: Option<usize>) {
         use crate::dev::x86::ioapic;
 
         for rec in madt.iter() {
-            if let MadtRecord::IoApic(id, addr, base) = rec {
+            if let MadtRecord::IoApic(_, addr, _) = rec {
                 ioapic::init(virtualize(addr as usize));
             }
         }

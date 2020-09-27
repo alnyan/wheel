@@ -1,9 +1,7 @@
+use crate::mem::phys::{self, PageUsage};
 use core::alloc::{GlobalAlloc, Layout};
 use core::cell::RefCell;
-use core::mem::size_of;
-use crate::mem::phys::{self, PageUsage};
 use crate::virtualize;
-use spin::Mutex;
 
 pub mod zone;
 pub mod block;
@@ -23,7 +21,8 @@ impl KernelHeap {}
 unsafe impl GlobalAlloc for KernelHeap {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         let size = layout.size();
-        let align = layout.align();
+        // TODO: align
+        let _align = layout.align();
 
         println!("alloc({})", size);
         for cell in self.zones.iter() {
@@ -33,7 +32,8 @@ unsafe impl GlobalAlloc for KernelHeap {
         }
         core::ptr::null_mut()
     }
-    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {}
+    // TODO: free()
+    unsafe fn dealloc(&self, _ptr: *mut u8, _layout: Layout) {}
 }
 
 #[global_allocator]
@@ -63,7 +63,7 @@ pub fn init_somewhere(zone_size: usize) {
     }
 
     println!("Test");
-    for (i, cell) in unsafe { &HEAP }.zones.iter().enumerate() {
+    for cell in unsafe { &HEAP }.zones.iter() {
         if let Some(phys_base) = phys::alloc_contiguous(PageUsage::Kernel, zone_size / 4096) {
             *cell.borrow_mut() = unsafe { Zone::place(virtualize(phys_base), zone_size) };
         } else {

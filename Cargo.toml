@@ -1,5 +1,5 @@
 [package]
-name = "Wheel"
+name = "wheel"
 version = "0.1.0"
 authors = ["Mark <alnyan@airmail.cc>"]
 edition = "2018"

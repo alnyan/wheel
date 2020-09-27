@@ -59,7 +59,7 @@ impl RootPointer {
 impl<T: Sized> RootSdt<T> {
     pub fn iter(&self) -> SdtIterator<T> {
         SdtIterator {
-            base:   &self.ptrs as *const _ as usize,
+            base:   unsafe { &self.ptrs } as *const _ as usize,
             index:  0,
             limit:  self.hdr.data_size() / size_of::<T>(),
             _0:     PhantomData,

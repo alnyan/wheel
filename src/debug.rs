@@ -97,26 +97,27 @@ macro_rules! println {
 }
 
 // TODO: offsets
-unsafe fn dump_line(base: *const u8, count: usize) {
+unsafe fn dump_line(base: *const u8, count: usize) -> fmt::Result {
     for i in 0 .. 16 {
         if i < count {
-            write_fmt_raw(format_args!("{:02x}", *(base.offset(i as isize))));
+            write_fmt_raw(format_args!("{:02x}", *(base.offset(i as isize))))?;
         } else {
-            write_fmt_raw(format_args!("  "));
+            write_fmt_raw(format_args!("  "))?;
         }
         if i % 2 != 0 {
-            write_fmt_raw(format_args!(" "));
+            write_fmt_raw(format_args!(" "))?;
         }
     }
-    write_fmt_raw(format_args!("\n"));
+    write_fmt_raw(format_args!("\n"))
 }
 
-pub unsafe fn dump(ptr: usize, count: usize) {
+pub unsafe fn dump(ptr: usize, count: usize) -> fmt::Result {
     let full_lines = count / 16;
     for i in 0 .. full_lines {
-        dump_line((ptr + i * 16) as *const _, 16);
+        dump_line((ptr + i * 16) as *const _, 16)?;
     }
     if (count % 16) != 0 {
-        dump_line((ptr + full_lines * 16) as *const _, count % 16);
+        dump_line((ptr + full_lines * 16) as *const _, count % 16)?;
     }
+    Ok(())
 }

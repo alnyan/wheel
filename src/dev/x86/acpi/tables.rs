@@ -3,7 +3,7 @@ use core::mem::size_of;
 
 #[repr(packed)]
 pub struct Fadt {
-    hdr:                Header,
+    pub hdr:            Header,
     pub firmware_ctrl:  u32,
     pub dsdt:           u32,
     _res0:              u8,
@@ -18,7 +18,7 @@ impl Table for Fadt {
 
 #[repr(packed)]
 pub struct Madt {
-    hdr:                Header,
+    pub hdr:            Header,
     pub local_apic:     u32,
     pub flags:          u32,
     records:            u8
@@ -43,7 +43,7 @@ impl Table for Madt {
 impl Madt {
     pub fn iter(&self) -> MadtIterator {
         MadtIterator {
-            base: unsafe { (&self.records) as *const _ as usize },
+            base: &self.records as *const _ as usize,
             offset: 0,
             limit: self.hdr.data_size() - size_of::<u32>() * 2
         }

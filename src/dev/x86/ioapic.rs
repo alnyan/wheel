@@ -1,4 +1,4 @@
-use core::ptr::{write_volatile, read_volatile, null_mut};
+use core::ptr::{write_volatile, read_volatile};
 use spin::Mutex;
 
 pub struct IoApic {
@@ -7,8 +7,8 @@ pub struct IoApic {
 }
 
 pub struct RedirEntry {
-    lower: u32,
-    upper: u32,
+    pub lower: u32,
+    pub upper: u32,
 }
 
 #[repr(u32)]
