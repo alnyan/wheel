@@ -9,6 +9,7 @@ SECTIONS {
     .text : AT(ADDR(.text) - KERNEL_OFFSET) ALIGN(4K) {
         *(.text*)
         *(.rodata*)
+        *(.eh_frame*)
     }
 
     .data : AT(ADDR(.data) - KERNEL_OFFSET) ALIGN(4K) {
