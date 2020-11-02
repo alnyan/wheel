@@ -67,6 +67,7 @@ pub fn add(vec: VectorNumber, h: &'static mut dyn IrqHandler) {
 
 #[no_mangle]
 extern "C" fn do_irq_0() {
+    println!("IRQ0");
 }
 
 #[no_mangle]

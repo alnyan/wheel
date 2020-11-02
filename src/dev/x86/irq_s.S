@@ -42,19 +42,7 @@ irq_\n:
 .section .text
 .global irq_0
 
-// Early IRQ0
-.type irq_0_early, %function
-irq_0_early:
-    cli
-    // Just do an EOI so the timer doesn't hang up
-    pushq %rax
-    mov apic_eoi(%rip), %rax
-    movl $0, (%rax)
-    popq %rax
-    iretq
-.size irq_0_early, . - irq_0_early
-
-// Real IRQ0
+// IRQ0
 .type irq_0, %function
 irq_0:
     cli
@@ -64,11 +52,11 @@ irq_0:
     call do_irq_0
     mov apic_eoi(%rip), %rax
     movl $0, (%rax)
-
     irq_popctx
 
     iretq
 .size irq_0, . - irq_0
+
 // Regular IRQs
 .irp vec, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31
     irq_entry \vec
@@ -80,7 +68,7 @@ irq_0:
 .type irq_vectors, %object
 irq_vectors:
     // Early IRQ0 (before scheduling is available on this CPU)
-    .quad irq_0_early
+    .quad irq_0
     // Regular vectors
     .irp vec, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31
         .quad irq_\vec

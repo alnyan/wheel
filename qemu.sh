@@ -12,6 +12,10 @@ if [ "$QEMU_DEBUG" = 1 ]; then
     QEMU_ARGS="$QEMU_ARGS -S"
 fi
 
+if [ ! "$QEMU_KVM" = 0 ]; then
+    QEMU_ARGS="$QEMU_ARGS -enable-kvm -cpu host"
+fi
+
 if [ "$RELEASE" = 1 ]; then
     CARGO_ARGS="$CARGO_ARGS --release"
     KERNEL="target/x86_64-unknown-none/release/$NAME"
@@ -42,5 +46,4 @@ qemu-system-x86_64 \
     -nographic \
     -s \
     -serial mon:stdio \
-    -enable-kvm \
-    -cpu host $QEMU_ARGS
+    $QEMU_ARGS

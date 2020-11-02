@@ -13,7 +13,7 @@ struct Entry64 {
 }
 
 #[repr(packed)]
-struct Tss {
+pub struct Tss {
     _res0:      u32,
     rsp0:       u64,
     rsp1:       u64,
@@ -76,7 +76,8 @@ static mut ENTRIES: [Entry; ENTRY_COUNT] = [
     Entry::new(0, 0, 0, 0),                             // Empty TSS
     Entry::new(0, 0, 0, 0),                             // Empty TSS
 ];
-static TSS: Tss = Tss {
+#[no_mangle]
+pub static mut TSS: Tss = Tss {
     _res0:      0,
     rsp0:       0,
     rsp1:       0,

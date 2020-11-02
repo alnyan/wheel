@@ -19,8 +19,6 @@ pub fn virtualize(phys: usize) -> usize {
     phys + KERNEL_OFFSET
 }
 
-use alloc::boxed::Box;
-
 #[macro_use]
 pub mod debug;
 pub mod arch;
@@ -28,6 +26,21 @@ mod boot;
 pub mod dev;
 pub mod mem;
 pub mod sync;
+pub mod thread;
+
+fn task1(_: usize) {
+    loop {
+        println!("1");
+        unsafe { thread::r#yield(); }
+    }
+}
+
+fn task2(_: usize) {
+    loop {
+        println!("2");
+        unsafe { thread::r#yield(); }
+    }
+}
 
 #[no_mangle]
 pub extern "C" fn kernel_main() {
@@ -48,14 +61,16 @@ pub extern "C" fn kernel_main() {
     dev::x86::acpi::init(Some(boot.rsdp as usize));
     dev::x86::ps2::init();
 
-    let x = Box::new(1234);
-    println!("Alive: {}!", x);
-
-    loop {
-        unsafe {
-            llvm_asm!("sti; hlt");
-        }
+    let mut thr0 = thread::Thread::new(task1, 0);
+    let mut thr1 = thread::Thread::new(task2, 0);
+    // Enter the thread
+    unsafe {
+        thread::enqueue(&mut thr0);
+        thread::enqueue(&mut thr1);
+        thread::enter();
     }
+
+    panic!("Did not enter the thread");
 }
 
 #[panic_handler]
