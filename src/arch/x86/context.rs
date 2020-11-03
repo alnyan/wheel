@@ -55,10 +55,10 @@ impl Context {
 
         unsafe {
             // Context for iret entry
-            self.push(0x10);    // ss
+            self.push(0x1B);    // ss
             self.push(ustack_base + 2 * 0x1000);  // user rsp
             self.push(0x200);     // rflags
-            self.push(0x08);    // cs
+            self.push(0x23);    // cs
             self.push(entry);   // rip
 
             // Context for common switching
@@ -122,8 +122,8 @@ context_switch_to:
     // TODO: cr3
 
     // Load new TSS.RSP0 value <- top of kernel stack
-    // mov 0x08(%rdi), %rax
-    // mov %rax, (TSS+4)(%rip)
+    mov 0x08(%rdi), %rax
+    mov %rax, (TSS+4)(%rip)
 
     ret
 .size context_switch, . - context_switch

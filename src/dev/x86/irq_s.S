@@ -49,9 +49,13 @@ irq_0:
 
     irq_pushctx
 
-    call do_irq_0
+    // First EOI
     mov apic_eoi(%rip), %rax
     movl $0, (%rax)
+
+    // Then switch
+    call do_irq_0
+
     irq_popctx
 
     iretq

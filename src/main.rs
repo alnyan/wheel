@@ -12,6 +12,7 @@ extern crate alloc;
 extern crate yboot2_proto;
 
 pub const KERNEL_OFFSET: usize = 0xFFFFFF0000000000;
+static mut FB: usize = 0;
 
 #[inline(always)]
 pub fn virtualize(phys: usize) -> usize {
@@ -28,17 +29,24 @@ pub mod mem;
 pub mod sync;
 pub mod thread;
 
+fn f(x: usize, y: u32) {
+    for i in 0 .. 100 {
+        let p = unsafe { FB } + (x * 100 + i) * 4;
+        unsafe { *(p as *mut u32) = y; }
+    }
+}
+
 fn task1(_: usize) {
     loop {
-        println!("1");
-        unsafe { thread::r#yield(); }
+        f(0, 0xFF0000);
+        //println!("1");
     }
 }
 
 fn task2(_: usize) {
     loop {
-        println!("2");
-        unsafe { thread::r#yield(); }
+        f(0, 0x0000FF);
+        //println!("2");
     }
 }
 
@@ -49,6 +57,8 @@ pub extern "C" fn kernel_main() {
     let boot = boot::boot_data();
     use yboot2_proto::Magic;
     assert!(boot.hdr.loader_magic == yboot2_proto::ProtoV1::LOADER_MAGIC);
+    assert!(boot.video.framebuffer != 0);
+    unsafe { FB = virtualize(boot.video.framebuffer as usize); }
 
     arch::x86::gdt::init();
     arch::x86::idt::init();

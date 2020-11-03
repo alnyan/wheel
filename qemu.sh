@@ -43,7 +43,6 @@ qemu-system-x86_64 \
     -drive readonly,format=raw,if=pflash,file=/usr/share/edk2-ovmf/OVMF_CODE.fd \
     -drive format=raw,file=${IMAGE} \
     -net none \
-    -nographic \
     -s \
     -serial mon:stdio \
     $QEMU_ARGS
