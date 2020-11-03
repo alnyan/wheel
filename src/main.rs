@@ -28,24 +28,31 @@ pub mod dev;
 pub mod mem;
 pub mod sync;
 pub mod thread;
-
-fn f(x: usize, y: u32) {
-    for i in 0 .. 100 {
-        let p = unsafe { FB } + (x * 100 + i) * 4;
-        unsafe { *(p as *mut u32) = y; }
-    }
-}
+pub mod syscall;
 
 fn task1(_: usize) {
     loop {
-        f(0, 0xFF0000);
+        unsafe { llvm_asm!("syscall"); }
         //println!("1");
     }
 }
 
 fn task2(_: usize) {
+    let boot = boot::boot_data();
+    let mut p = 0;
+    let mut t = 0;
+    let off = (boot.video.width * boot.video.height) as usize * 2;
     loop {
-        f(0, 0x0000FF);
+        let ptr = unsafe { FB } + off + p * 4;
+        p += 1;
+        if p >= (boot.video.width * boot.video.height) as usize / 2 {
+            p = 0;
+        }
+        unsafe { *(ptr as *mut u32) = t & 0xFFFFFF; }
+        for i in 0 .. 100 {
+            unsafe { llvm_asm!("nop"); }
+        }
+        t += 1;
         //println!("2");
     }
 }
@@ -70,6 +77,8 @@ pub extern "C" fn kernel_main() {
     dev::x86::apic::init(virtualize(0xFEE00000));
     dev::x86::acpi::init(Some(boot.rsdp as usize));
     dev::x86::ps2::init();
+
+    syscall::init();
 
     let mut thr0 = thread::Thread::new(task1, 0);
     let mut thr1 = thread::Thread::new(task2, 0);

@@ -4,3 +4,4 @@ pub mod regs;
 pub mod context;
 pub mod exception;
 pub mod intrinsics;
+pub mod syscall;

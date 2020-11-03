@@ -21,6 +21,10 @@ if [ "$RELEASE" = 1 ]; then
     KERNEL="target/x86_64-unknown-none/release/$NAME"
 fi
 
+if [ "$QEMU_NOGRAPHIC" = 1 ]; then
+    QEMU_ARGS="$QEMU_ARGS -nographic"
+fi
+
 mkdir -p build
 
 if [ ! -d "build/yboot2" ]; then
