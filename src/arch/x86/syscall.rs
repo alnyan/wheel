@@ -9,11 +9,66 @@ extern "C" {
     fn syscall_entry();
 }
 
+#[no_mangle]
+extern "C" fn syscall_undefined(no: usize) {
+    panic!("Undefined system call: {}", no);
+}
+
 global_asm!(r#"
 .section .text
 .global syscall_entry
 syscall_entry:
-    jmp .
+    // TODO: swapgs n shiet
+    // rip -> rcx
+    // rflags -> r11
+
+    // Store user stack in temporary location
+    mov %rsp, syscall_stack(%rip)
+    // Switch to kernel stack
+    mov CURRENT(%rip), %rsp // TODO: null check? Don't think this can happen, but still
+    mov 0x00(%rsp), %rsp
+
+    // Can do stuff with stack now
+    push %rcx
+    push %r11
+    mov syscall_stack(%rip), %rcx
+    push %rcx
+
+    cmp $256, %rax
+    jge 1f
+    lea SYSCALL_TABLE(%rip), %rcx
+    mov (%rcx, %rax, 8), %rcx
+    test %rcx, %rcx
+    jz 1f
+
+    // Fixup ABI/argument order
+    mov %rcx, %rax
+    mov %r10, %rcx
+
+    // TODO: interrupts/TSS here?
+    call *%rax
+
+    jmp 2f
+1:
+    mov %rax, %rdi
+    call syscall_undefined
+2:
+
+    pop %rdi
+    pop %r11
+    pop %rcx
+
+    mov CURRENT(%rip), %rsp
+    mov %rdi, 0x00(%rsp)
+    mov %rdi, %rsp
+
+    // TODO: swapgs back
+
+    sysretq
+
+.section .data
+syscall_stack:
+    .quad 0
 "#);
 
 pub fn init() {

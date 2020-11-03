@@ -32,8 +32,7 @@ pub mod syscall;
 
 fn task1(_: usize) {
     loop {
-        unsafe { llvm_asm!("syscall"); }
-        //println!("1");
+        unsafe { llvm_asm!("syscall"::"{rax}"(1)); }
     }
 }
 
@@ -49,11 +48,10 @@ fn task2(_: usize) {
             p = 0;
         }
         unsafe { *(ptr as *mut u32) = t & 0xFFFFFF; }
-        for i in 0 .. 100 {
+        for _ in 0 .. 100 {
             unsafe { llvm_asm!("nop"); }
         }
         t += 1;
-        //println!("2");
     }
 }
 
@@ -88,8 +86,6 @@ pub extern "C" fn kernel_main() {
         thread::enqueue(&mut thr1);
         thread::enter();
     }
-
-    panic!("Did not enter the thread");
 }
 
 #[panic_handler]

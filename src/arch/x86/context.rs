@@ -1,4 +1,4 @@
-use core::mem::{MaybeUninit, size_of};
+use core::mem::size_of;
 use alloc::boxed::Box;
 
 pub const DEFAULT_KSTACK_PAGES: usize = 2;

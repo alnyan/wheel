@@ -6,7 +6,7 @@ pub struct Thread {
 }
 
 impl Thread {
-    pub fn new(entry: fn(usize) -> (), arg: usize) -> Thread {
+    pub fn new(entry: fn(usize) -> (), _arg: usize) -> Thread {
         Thread {
             context: Context::new(entry as usize),
             next: core::ptr::null_mut()
@@ -19,7 +19,8 @@ impl Thread {
 }
 
 static mut QUEUE_HEAD: *mut Thread = core::ptr::null_mut();
-static mut CURRENT: *mut Thread = core::ptr::null_mut();
+#[no_mangle]
+pub static mut CURRENT: *mut Thread = core::ptr::null_mut();
 
 pub unsafe fn enter() -> ! {
     assert!(!QUEUE_HEAD.is_null());
