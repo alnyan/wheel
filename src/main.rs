@@ -31,9 +31,13 @@ pub mod thread;
 pub mod syscall;
 
 fn task1(_: usize) {
-    loop {
-        unsafe { llvm_asm!("syscall"::"{rax}"(1)); }
+    for _ in 0 .. 1000000 {
+        unsafe { llvm_asm!("nop"); }
     }
+
+    println!("Done");
+    unsafe { (*Thread::current()).terminate(); }
+    loop {}
 }
 
 fn task2(_: usize) {
@@ -79,10 +83,12 @@ pub extern "C" fn kernel_main() {
     dev::x86::ps2::init();
 
     syscall::init();
+    thread::setup();
 
     let mut proc = Process::new_kernel();
     proc.spawn(task1 as usize, 0).unwrap();
     proc.spawn(task2 as usize, 0).unwrap();
+
     // Enter the thread
     unsafe {
         thread::enter();

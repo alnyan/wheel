@@ -20,6 +20,11 @@ pub struct Thread {
     pub sched_next: *mut Thread,
 }
 
+pub struct Stats {
+    pub idle_ticks: u64,
+    pub total_ticks: u64
+}
+
 impl Process {
     pub fn new_kernel() -> Process {
         println!("Create new empty process");
@@ -60,7 +65,23 @@ impl Thread {
         }
     }
 
-    pub fn queue(&mut self) {
+    pub fn is_current(&self) -> bool {
+        return unsafe { self as *const Thread == CURRENT };
+    }
+
+    pub fn current() -> *mut Thread {
+        unsafe {
+            assert!(!CURRENT.is_null());
+            return CURRENT;
+        }
+    }
+
+    pub fn terminate(&mut self) {
+        self.dequeue();
+    }
+
+    fn queue(&mut self) {
+        unsafe { llvm_asm!("cli"); }
         assert!(self.sched_prev.is_null() == self.sched_next.is_null());
 
         if self.sched_prev.is_null() {
@@ -82,7 +103,8 @@ impl Thread {
         }
     }
 
-    pub fn dequeue(&mut self) {
+    fn dequeue(&mut self) {
+        unsafe { llvm_asm!("cli"); }
         assert!(self.sched_prev.is_null() == self.sched_next.is_null());
 
         let prev = self.sched_prev;
@@ -99,7 +121,8 @@ impl Thread {
 
                 QUEUE_HEAD = null_mut();
 
-                todo!();        // Yield control
+                CURRENT = IDLE;
+                self.context.switch_to(&mut (*IDLE).context);
             }
 
             if QUEUE_HEAD == self as *mut Thread {
@@ -112,32 +135,68 @@ impl Thread {
             self.sched_next = null_mut();
             self.sched_prev = null_mut();
 
-            todo!();    // Yield control
+            CURRENT = next;
+            self.context.switch_to(&mut (*next).context);
         }
     }
 }
 
-static mut QUEUE_HEAD: *mut Thread = core::ptr::null_mut();
+static mut QUEUE_HEAD: *mut Thread = null_mut();
 #[no_mangle]
-pub static mut CURRENT: *mut Thread = core::ptr::null_mut();
+pub static mut CURRENT: *mut Thread = null_mut();
+static mut IDLE: *mut Thread = null_mut();
+static mut STATS: Stats = Stats {
+    idle_ticks: 0,
+    total_ticks: 0
+};
+
+pub fn idle(_: usize) {
+    loop {
+        unsafe { llvm_asm!("hlt"); }
+    }
+}
+
+pub fn setup() {
+    let idle = Box::new(Thread::new_kernel(null_mut(), idle as usize, 0));
+    unsafe {
+        IDLE = Box::into_raw(idle);
+    }
+}
 
 pub unsafe fn enter() -> ! {
-    assert!(!QUEUE_HEAD.is_null());
-    CURRENT = QUEUE_HEAD;
+    assert!(!IDLE.is_null());
+
+    if QUEUE_HEAD.is_null() {
+        CURRENT = IDLE;
+    } else {
+        CURRENT = QUEUE_HEAD;
+    }
+
     (*CURRENT).context.initial_switch();
-    loop {}
+    panic!("Didn't enter the thread");
 }
 
 pub unsafe fn r#yield() {
     let next: *mut Thread;
     let curr = CURRENT;
 
+    STATS.total_ticks += 1;
+    if curr == IDLE {
+        STATS.idle_ticks += 1;
+    }
+
+    if STATS.total_ticks >= 400 {
+        println!("Load: {}%", (STATS.total_ticks - STATS.idle_ticks) / (STATS.total_ticks / 100));
+        STATS.total_ticks = 0;
+        STATS.idle_ticks = 0;
+    }
+
     if !curr.is_null() && !(*curr).sched_next.is_null() {
         next = (*curr).sched_next;
     } else if !QUEUE_HEAD.is_null() {
         next = QUEUE_HEAD;
     } else {
-        todo!(); // Idle thread
+        next = IDLE;
     }
 
     assert!(!next.is_null());

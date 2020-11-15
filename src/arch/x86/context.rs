@@ -55,10 +55,15 @@ impl Context {
 
         unsafe {
             // Context for iret entry
-            self.push(0x1B);    // ss
+            // self.push(0x1B);    // ss
+            // self.push(ustack_base + 2 * 0x1000);  // user rsp
+            // self.push(0x200);     // rflags
+            // self.push(0x23);    // cs
+            // self.push(entry);   // rip
+            self.push(0x10);    // ss
             self.push(ustack_base + 2 * 0x1000);  // user rsp
             self.push(0x200);     // rflags
-            self.push(0x23);    // cs
+            self.push(0x08);    // cs
             self.push(entry);   // rip
 
             // Context for common switching
