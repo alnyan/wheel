@@ -55,6 +55,8 @@ fn task2(_: usize) {
     }
 }
 
+use thread::{Process, Thread};
+
 #[no_mangle]
 pub extern "C" fn kernel_main() {
     // Cleanup terminal colors after UEFI
@@ -78,12 +80,11 @@ pub extern "C" fn kernel_main() {
 
     syscall::init();
 
-    let mut thr0 = thread::Thread::new(task1, 0);
-    let mut thr1 = thread::Thread::new(task2, 0);
+    let mut proc = Process::new_kernel();
+    proc.spawn(task1 as usize, 0).unwrap();
+    proc.spawn(task2 as usize, 0).unwrap();
     // Enter the thread
     unsafe {
-        thread::enqueue(&mut thr0);
-        thread::enqueue(&mut thr1);
         thread::enter();
     }
 }
