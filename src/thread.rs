@@ -5,7 +5,7 @@ use core::ptr::null_mut;
 pub struct Process {
     pub id: i32,
     pub is_user: bool,
-    pub head: *mut Thread
+    pub head: *mut Thread,
 }
 
 pub struct Thread {
@@ -22,14 +22,14 @@ pub struct Thread {
 
 pub struct Stats {
     pub idle_ticks: u64,
-    pub total_ticks: u64
+    pub total_ticks: u64,
 }
 
 impl Process {
     pub fn new_kernel() -> Process {
         println!("Create new empty process");
         Process {
-            id: 0,  // TODO
+            id: 0, // TODO
             is_user: false,
             head: null_mut(),
         }
@@ -39,19 +39,25 @@ impl Process {
         println!("Spawn a thread in process #{}", self.id);
 
         // TODO: user threads
-        let thread = Box::into_raw(Box::new(Thread::new_kernel(self as *mut Process, entry, arg)));
-        unsafe { (*thread).thread_next = self.head; }
+        let thread = Box::into_raw(Box::new(Thread::new_kernel(
+            self as *mut Process,
+            entry,
+            arg,
+        )));
+        unsafe {
+            (*thread).thread_next = self.head;
+        }
         self.head = thread;
-        unsafe { (*thread).queue(); }
+        unsafe {
+            (*thread).queue();
+        }
 
         Some(thread)
     }
 }
 
 impl Thread {
-    fn new_kernel(owner: *mut Process,
-                  entry: usize,
-                  _arg: usize) -> Thread {
+    fn new_kernel(owner: *mut Process, entry: usize, _arg: usize) -> Thread {
         Thread {
             context: Context::new(entry),
 
@@ -81,7 +87,9 @@ impl Thread {
     }
 
     fn queue(&mut self) {
-        unsafe { llvm_asm!("cli"); }
+        unsafe {
+            llvm_asm!("cli");
+        }
         assert!(self.sched_prev.is_null() == self.sched_next.is_null());
 
         if self.sched_prev.is_null() {
@@ -104,7 +112,9 @@ impl Thread {
     }
 
     fn dequeue(&mut self) {
-        unsafe { llvm_asm!("cli"); }
+        unsafe {
+            llvm_asm!("cli");
+        }
         assert!(self.sched_prev.is_null() == self.sched_next.is_null());
 
         let prev = self.sched_prev;
@@ -147,12 +157,14 @@ pub static mut CURRENT: *mut Thread = null_mut();
 static mut IDLE: *mut Thread = null_mut();
 static mut STATS: Stats = Stats {
     idle_ticks: 0,
-    total_ticks: 0
+    total_ticks: 0,
 };
 
 pub fn idle(_: usize) {
     loop {
-        unsafe { llvm_asm!("hlt"); }
+        unsafe {
+            llvm_asm!("hlt");
+        }
     }
 }
 
@@ -186,7 +198,10 @@ pub unsafe fn r#yield() {
     }
 
     if STATS.total_ticks >= 400 {
-        println!("Load: {}%", (STATS.total_ticks - STATS.idle_ticks) / (STATS.total_ticks / 100));
+        println!(
+            "Load: {}%",
+            (STATS.total_ticks - STATS.idle_ticks) / (STATS.total_ticks / 100)
+        );
         STATS.total_ticks = 0;
         STATS.idle_ticks = 0;
     }
