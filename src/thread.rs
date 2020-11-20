@@ -8,8 +8,16 @@ pub struct Process {
     pub head: *mut Thread,
 }
 
+#[derive(PartialEq)]
+pub enum ThreadState {
+    READY,
+    RUNNING,
+    TERMINATED
+}
+
 pub struct Thread {
     pub context: Context,
+    pub state: ThreadState,
 
     pub owner: *mut Process,
 
@@ -60,6 +68,7 @@ impl Thread {
     fn new_kernel(owner: *mut Process, entry: usize, _arg: usize) -> Thread {
         Thread {
             context: Context::new(entry),
+            state: ThreadState::READY,
 
             owner,
 
@@ -83,7 +92,7 @@ impl Thread {
     }
 
     pub fn terminate(&mut self) {
-        self.dequeue();
+        self.dequeue(ThreadState::TERMINATED);
     }
 
     fn queue(&mut self) {
@@ -111,11 +120,13 @@ impl Thread {
         }
     }
 
-    fn dequeue(&mut self) {
+    fn dequeue(&mut self, state: ThreadState) {
         unsafe {
             llvm_asm!("cli");
         }
         assert!(self.sched_prev.is_null() == self.sched_next.is_null());
+        assert!(state == ThreadState::READY || state == ThreadState::TERMINATED);
+        self.state = state;
 
         let prev = self.sched_prev;
         let next = self.sched_next;
@@ -132,7 +143,9 @@ impl Thread {
                 QUEUE_HEAD = null_mut();
 
                 CURRENT = IDLE;
+                (*CURRENT).state = ThreadState::RUNNING;
                 self.context.switch_to(&mut (*IDLE).context);
+                return;
             }
 
             if QUEUE_HEAD == self as *mut Thread {
@@ -146,6 +159,8 @@ impl Thread {
             self.sched_prev = null_mut();
 
             CURRENT = next;
+            assert!((*CURRENT).state == ThreadState::READY);
+            (*CURRENT).state = ThreadState::RUNNING;
             self.context.switch_to(&mut (*next).context);
         }
     }
@@ -184,6 +199,7 @@ pub unsafe fn enter() -> ! {
         CURRENT = QUEUE_HEAD;
     }
 
+    (*CURRENT).state = ThreadState::RUNNING;
     (*CURRENT).context.initial_switch();
     panic!("Didn't enter the thread");
 }
@@ -196,6 +212,9 @@ pub unsafe fn r#yield() {
     if curr == IDLE {
         STATS.idle_ticks += 1;
     }
+
+    assert!((*curr).state == ThreadState::RUNNING);
+    (*curr).state = ThreadState::READY;
 
     if STATS.total_ticks >= 400 {
         println!(
@@ -215,6 +234,8 @@ pub unsafe fn r#yield() {
     }
 
     assert!(!next.is_null());
+    assert!((*next).state == ThreadState::READY);
+    (*next).state = ThreadState::RUNNING;
     CURRENT = next;
 
     (*curr).context.switch_to(&mut (*next).context);
