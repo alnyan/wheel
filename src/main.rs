@@ -36,7 +36,7 @@ fn task1(_: usize) {
     }
 
     println!("Done");
-    unsafe { (*Thread::current()).terminate(); }
+    // unsafe { (*Thread::current()).terminate(); }
     loop {}
 }
 
@@ -58,8 +58,6 @@ fn task2(_: usize) {
         t += 1;
     }
 }
-
-use thread::{Process, Thread};
 
 #[no_mangle]
 pub extern "C" fn kernel_main() {
@@ -85,9 +83,9 @@ pub extern "C" fn kernel_main() {
     syscall::init();
     thread::setup();
 
-    let mut proc = Process::new_kernel();
-    proc.spawn(task1 as usize, 0).unwrap();
-    proc.spawn(task2 as usize, 0).unwrap();
+    //let mut proc = Process::new_kernel();
+    //proc.spawn(task1 as usize, 0).unwrap();
+    //proc.spawn(task2 as usize, 0).unwrap();
 
     // Enter the thread
     unsafe {

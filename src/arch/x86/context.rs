@@ -3,6 +3,9 @@ use alloc::boxed::Box;
 
 pub const DEFAULT_KSTACK_PAGES: usize = 2;
 
+#[no_mangle]
+static mut CURRENT: *mut InnerContext = core::ptr::null_mut();
+
 // Has to be accessible from assembly using
 // well-known offsets
 #[repr(C)]
