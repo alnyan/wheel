@@ -67,8 +67,8 @@ pub fn add(vec: VectorNumber, h: &'static mut dyn IrqHandler) {
 
 #[no_mangle]
 extern "C" fn do_irq_0() {
-    use crate::thread;
-    unsafe { thread::r#yield(); }
+    use crate::sched;
+    sched::r#yield();
 }
 
 #[no_mangle]

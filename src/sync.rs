@@ -1,3 +1,5 @@
+#![allow(clippy::new_without_default)]
+
 pub struct IrqDisable {
     saved_rflags: u64
 }

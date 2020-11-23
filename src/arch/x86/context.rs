@@ -116,6 +116,7 @@ context_switch:
 
     mov %rsp, 0x00(%rsi)
 context_switch_to:
+    mov %rdi, CURRENT(%rip)
     // Load new stack pointer
     mov 0x00(%rdi), %rsp
 

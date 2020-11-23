@@ -61,9 +61,9 @@ impl<T: Level> Table for PageTable<T> {
         let entry = self.entries[index];
 
         if entry & PAGE_PRESENT != 0 {
-            if flags.is_some() {
+            if let Some(r) = flags {
                 // TODO: NX
-                *flags.unwrap() = entry & 0xFFF;
+                *r = entry & 0xFFF;
             }
 
             Some((entry & !0xFFF) as usize)
@@ -94,11 +94,15 @@ pub fn translate(space: &Space, virt: usize, flags: Option<&mut u64>) -> Option<
             if let Some(l2_addr) = pd.translate(virt, Some(&mut inner_flags)) {
                 if inner_flags & PAGE_HUGE != 0 {
                     // 2MiB page
-                    flags.map(|r| {*r = inner_flags});
+
+                    if let Some(r) = flags {
+                        *r = inner_flags;
+                    }
+
                     Some(l2_addr | (virt & 0x1FFFFF))
                 } else {
                     let pt = unsafe { &*(virtualize(l2_addr) as *const PageTable<L1>) };
-                    return pt.translate(virt, flags);
+                    pt.translate(virt, flags)
                 }
             } else {
                 None

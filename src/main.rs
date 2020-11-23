@@ -27,7 +27,8 @@ mod boot;
 pub mod dev;
 pub mod mem;
 pub mod sync;
-pub mod thread;
+pub mod proc;
+pub mod sched;
 pub mod syscall;
 
 fn task1(_: usize) {
@@ -35,7 +36,7 @@ fn task1(_: usize) {
         unsafe { llvm_asm!("nop"); }
     }
 
-    println!("Done");
+    println!("Meow!");
     // unsafe { (*Thread::current()).terminate(); }
     loop {}
 }
@@ -81,15 +82,18 @@ pub extern "C" fn kernel_main() {
     dev::x86::ps2::init();
 
     syscall::init();
-    thread::setup();
+    sched::init();
 
+    // Will not get freed until the end of scope, so okay
+    proc::Process::kspawn(task1, 0, "task1").queue();
+    proc::Process::kspawn(task2, 0, "task2").queue();
     //let mut proc = Process::new_kernel();
     //proc.spawn(task1 as usize, 0).unwrap();
     //proc.spawn(task2 as usize, 0).unwrap();
 
     // Enter the thread
     unsafe {
-        thread::enter();
+        sched::enter();
     }
 }
 
