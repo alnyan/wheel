@@ -69,7 +69,7 @@ pub fn alloc_page(usage: PageUsage) -> Option<PhysAddr> {
             return Some(index << 12);
         }
     }
-    return None;
+    None
 }
 
 pub fn free_page(phys: PhysAddr) {

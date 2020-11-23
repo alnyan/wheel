@@ -100,7 +100,7 @@ macro_rules! println {
 unsafe fn dump_line(base: *const u8, count: usize) -> fmt::Result {
     for i in 0 .. 16 {
         if i < count {
-            write_fmt_raw(format_args!("{:02x}", *(base.offset(i as isize))))?;
+            write_fmt_raw(format_args!("{:02x}", *base.add(i)))?;
         } else {
             write_fmt_raw(format_args!("  "))?;
         }
@@ -111,6 +111,10 @@ unsafe fn dump_line(base: *const u8, count: usize) -> fmt::Result {
     write_fmt_raw(format_args!("\n"))
 }
 
+/// # Safety
+///
+/// Caller must guarantee "ptr" and "count" define a valid
+/// memory range of "count" bytes
 pub unsafe fn dump(ptr: usize, count: usize) -> fmt::Result {
     let full_lines = count / 16;
     for i in 0 .. full_lines {

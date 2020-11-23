@@ -1,12 +1,18 @@
 pub mod cr2;
 pub mod cr3;
 
+/// # Safety
+///
+/// Absolutely unsafe - arbitrary MSR reads
 pub unsafe fn rdmsr(r: u32) -> u64 {
     let mut res: u64;
     llvm_asm!("rdmsr":"=A"(res):"{rcx}"(r):"rdx");
     res
 }
 
+/// # Safety
+///
+/// Absolutely unsafe - arbitrary MSR writes
 pub unsafe fn wrmsr(r: u32, v: u64) {
     let low = (v & 0xFFFFFFFF) as u32;
     let high = (v >> 32) as u32;

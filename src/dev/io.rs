@@ -10,7 +10,7 @@ pub trait ReadIo<T> {
 
 pub struct PortIo<T> {
     port: u16,
-    _data: PhantomData<T>
+    _data: PhantomData<T>,
 }
 
 impl ReadIo<u8> for PortIo<u8> {
@@ -21,19 +21,24 @@ impl ReadIo<u8> for PortIo<u8> {
 
 impl WriteIo<u8> for PortIo<u8> {
     fn write(&mut self, value: u8) {
-        unsafe { outb(self.port, value); }
+        unsafe {
+            outb(self.port, value);
+        }
     }
 }
 
 impl<T> PortIo<T> {
     pub const fn new(port: u16) -> Self {
         Self {
-            port: port,
-            _data: PhantomData
+            port,
+            _data: PhantomData,
         }
     }
 }
 
+/// # Safety
+///
+/// Absolutely unsafe - arbitrary I/O space reads
 #[inline(always)]
 pub unsafe fn inb(port: u16) -> u8 {
     let mut val: u8;
@@ -41,6 +46,9 @@ pub unsafe fn inb(port: u16) -> u8 {
     val
 }
 
+/// # Safety
+///
+/// Absolutely unsafe - arbitrary I/O space writes
 #[inline(always)]
 pub unsafe fn outb(port: u16, byte: u8) {
     llvm_asm!("outb $0, $1"::"{al}"(byte),"{dx}"(port));

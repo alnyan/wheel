@@ -28,8 +28,8 @@ impl Entry {
             base_ex:    ((addr >> 32) & 0xFFFFFFFF) as u32,
             zero0:      0,
             zero1:      1,
-            selector:   selector,
-            flags:      flags
+            selector,
+            flags,
         }
     }
     pub const fn empty() -> Self {

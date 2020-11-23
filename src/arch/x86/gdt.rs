@@ -46,9 +46,9 @@ impl Entry64 {
             base_lo:    (base & 0xFFFF) as u16,
             base_mi:    ((base >> 16) & 0xFF) as u8,
             base_hi:    ((base >> 24) & 0xFF) as u8,
-            access:     access,
             flags:      (flags & 0xF0) | (((limit >> 16) & 0xF) as u8),
             limit_lo:   (limit & 0xFFFF) as u16,
+            access,
         }
     }
 }

@@ -50,9 +50,7 @@ pub fn init(address: usize) {
     // TODO: check if already?
     println!("APIC base is 0x{:016x}", address);
 
-    *APIC.lock() = LocalApic {
-        address: address
-    };
+    *APIC.lock() = LocalApic { address };
     unsafe { apic_eoi = (address + Reg::EOI as usize) as *mut _; }
     APIC.lock().init();
 }

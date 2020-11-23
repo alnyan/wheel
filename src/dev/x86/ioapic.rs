@@ -77,7 +77,7 @@ static IOAPIC: Mutex<IoApic> = Mutex::new(IoApic { address: 0, limit: 0 });
 pub fn init(address: usize) {
     println!("I/O APIC base is 0x{:016x}", address);
     *IOAPIC.lock() = IoApic {
-        address: address,
+        address,
         limit: 0
     };
     IOAPIC.lock().init();

@@ -31,6 +31,10 @@ impl Block {
         }
     }
 
+    /// # Safety
+    ///
+    /// Caller must guarantee "at" and "size" define
+    /// a valid chunk of memory
     pub unsafe fn place(at: usize, size: usize) -> &'static mut Block {
         let block = &mut *(at as *mut Block);
         *block = Block::new(size);
@@ -41,8 +45,8 @@ impl Block {
         self.size as usize
     }
 
-    pub unsafe fn data(&self) -> *mut u8 {
-        (self as *const Block).offset(1) as *mut u8
+    pub fn data(&self) -> *mut u8 {
+        unsafe { (self as *const Block).offset(1) as *mut u8 }
     }
 
     pub fn is_used(&self) -> bool {
@@ -56,7 +60,7 @@ impl Block {
     /// Insert `next` after `self` and properly link
     /// blocks.
     pub fn insert(&mut self, next: &mut Block) {
-        if self.next != null_mut() {
+        if !self.next.is_null() {
             let old_next = unsafe { &mut *self.next };
             old_next.prev = next;
         }
@@ -69,12 +73,12 @@ impl Block {
     /// sizes and fixing links (if next is present and
     /// both are unused).
     pub fn merge(&mut self) -> bool {
-        if !self.is_used() && self.next != null_mut() {
+        if !self.is_used() && !self.next.is_null() {
             let next = unsafe { &mut *self.next };
 
             if !next.is_used() {
                 self.next = next.next;
-                if next.next != null_mut() {
+                if !next.next.is_null() {
                     unsafe { &mut *next.next }.prev = self;
                 }
                 self.size += size_of::<Block>() as u32 + next.size;
@@ -90,15 +94,17 @@ impl Block {
 
     /// Allocate requested size from self, possibly
     /// splitting it to create a new one
-    /// `unsafe` because of special requirements
-    pub unsafe fn alloc(&mut self, count: usize) -> Option<*mut u8> {
+    pub fn alloc(&mut self, count: usize) -> Option<*mut u8> {
         if self.is_used() || self.size() < count {
             return None;
         }
 
         if self.size() >= count + size_of::<Block>() {
             let new_block_addr = self.data() as usize + count;
-            let new_block = Block::place(new_block_addr, self.size() - count - size_of::<Block>());
+            // Should be safe as long as there's no corruption in this header
+            let new_block = unsafe {
+                Block::place(new_block_addr, self.size() - count - size_of::<Block>())
+            };
             // Link
             self.insert(new_block);
             self.size = count as u32;

@@ -36,6 +36,10 @@ impl Zone {
         }
     }
 
+    /// # Safety
+    ///
+    /// Caller must guarantee "at" and "size" define
+    /// a valid chunk of memory
     pub unsafe fn place(at: usize, size: usize) -> Zone {
         let head = Block::place(at, size - size_of::<Block>());
         Zone {
@@ -73,7 +77,7 @@ impl Zone {
         }
     }
 
-    pub unsafe fn alloc(&mut self, size: usize) -> Option<*mut u8> {
+    pub fn alloc(&mut self, size: usize) -> Option<*mut u8> {
         for block in self.iter_mut() {
             if let Some(data) = block.alloc(size) {
                 return Some(data);

@@ -81,10 +81,16 @@ impl Context {
         }
     }
 
+    /// # Safety
+    ///
+    /// Unsafe - involves direct context manipulation
     pub unsafe fn switch_to(&mut self, to: &mut Context) {
         context_switch(&mut to.inner, &mut self.inner);
     }
 
+    /// # Safety
+    ///
+    /// Unsafe - involves direct context manipulation
     pub unsafe fn initial_switch(&mut self) {
         context_switch_to(&mut self.inner);
     }

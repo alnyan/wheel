@@ -46,6 +46,10 @@ fn alloc_error_handler(layout: Layout) -> ! {
     panic!("Allocation error: {:?}", layout);
 }
 
+/// # Safety
+///
+/// Caller must guarantee "at" and "size" define
+/// a valid chunk of memory
 pub unsafe fn init(at: usize, size: usize) {
     let zone_size = size / HEAP_ZONES;
     if zone_size % 4096 != 0 {

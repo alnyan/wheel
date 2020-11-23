@@ -74,6 +74,6 @@ impl Iterator for MadtIterator {
 
         self.offset += len as usize;
 
-        return res;
+        res
     }
 }
