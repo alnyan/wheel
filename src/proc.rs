@@ -23,10 +23,6 @@ impl Process {
         }
     }
 
-    pub fn queue(&mut self) {
-        sched::queue(self);
-    }
-
     pub fn current() -> &'static mut Process {
         sched::current_proc()
     }

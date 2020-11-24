@@ -3,6 +3,58 @@ use alloc::boxed::Box;
 use core::ptr::null_mut;
 use spin::Mutex;
 
+pub struct Semaphore {
+    count: Mutex<u32>,
+    head: *mut Process,
+    // TODO: queue
+}
+
+unsafe impl Sync for Semaphore {}
+
+impl Semaphore {
+    pub const fn new(initial: u32) -> Semaphore {
+        Semaphore {
+            count: Mutex::new(initial),
+            head: null_mut()
+        }
+    }
+
+    pub fn signal(&mut self) {
+        let proc = Process::current();
+        {
+            let mut lock = self.count.lock();
+            assert!(*lock > 0);
+            *lock -= 1;
+        }
+
+        if !self.head.is_null() {
+            queue(self.head);
+            self.head = null_mut();
+        }
+    }
+
+    pub fn wait(&mut self) {
+        let proc = Process::current();
+
+        loop {
+            {
+                let mut lock = self.count.lock();
+                if *lock == 0 {
+                    *lock += 1;
+                    return;
+                }
+
+                if !self.head.is_null() {
+                    todo!();
+                }
+                self.head = proc;
+            }
+
+            dequeue(proc);
+        }
+    }
+}
+
 // Needs manual locking because second "switch" will
 // result in deadlock if usual locking on whole scheduler
 // struct
@@ -35,14 +87,16 @@ impl SchedulerHead {
 }
 
 impl Scheduler {
-    pub fn queue(&mut self, proc: &mut Process) {
+    pub fn queue(&mut self, proc: *mut Process) {
         let mut queue_lock = self.queue_head.lock();
 
         if queue_lock.is_null() {
             *queue_lock = proc;
-            proc.sched = SchedulerHead {
-                prev: proc,
-                next: proc,
+            unsafe {
+                (*proc).sched = SchedulerHead {
+                    prev: proc,
+                    next: proc,
+                }
             }
         } else {
             unsafe {
@@ -52,6 +106,47 @@ impl Scheduler {
                 (*proc).sched.prev = tail;
                 (**queue_lock).sched.prev = proc;
                 (*proc).sched.next = *queue_lock;
+            }
+        }
+    }
+
+    pub fn dequeue(&mut self, proc: *mut Process) {
+        unsafe {
+            let prev: *mut Process;
+            let next: *mut Process;
+            {
+                let mut queue_lock = self.queue_head.lock();
+                prev = (*proc).sched.prev;
+                next = (*proc).sched.next;
+
+                assert!(!prev.is_null() && !next.is_null());
+
+                if next == proc {
+                    // The only element in queue
+                    assert!(proc == *queue_lock);
+
+                    (*proc).sched.prev = null_mut();
+                    (*proc).sched.next = null_mut();
+
+                    *queue_lock = null_mut();
+
+                    *self.current.lock() = self.idle;
+                    todo!();
+                }
+
+                if proc == *queue_lock {
+                    *queue_lock = next;
+                }
+
+                (*prev).sched.next = next;
+                (*next).sched.prev = prev;
+
+                (*proc).sched = SchedulerHead::empty();
+            }
+
+            if *self.current.lock() == proc {
+                *self.current.lock() = next;
+                unsafe { (*proc).context.switch_to(&mut (*next).context); }
             }
         }
     }
@@ -110,8 +205,12 @@ pub fn current_proc() -> &'static mut Process {
     unsafe { &mut **CPU0.current.lock() }
 }
 
-pub fn queue(proc: &mut Process) {
+pub fn queue(proc: *mut Process) {
     unsafe { CPU0.queue(proc) };
+}
+
+pub fn dequeue(proc: *mut Process) {
+    unsafe { CPU0.dequeue(proc) };
 }
 
 pub fn idle(_: usize) {

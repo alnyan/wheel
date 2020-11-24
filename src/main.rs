@@ -32,31 +32,12 @@ pub mod sched;
 pub mod syscall;
 
 fn task1(_: usize) {
-    for _ in 0 .. 1000000 {
-        unsafe { llvm_asm!("nop"); }
+    loop {
     }
-
-    println!("Meow!");
-    // unsafe { (*Thread::current()).terminate(); }
-    loop {}
 }
 
 fn task2(_: usize) {
-    let boot = boot::boot_data();
-    let mut p = 0;
-    let mut t = 0;
-    let off = (boot.video.width * boot.video.height) as usize * 2;
     loop {
-        let ptr = unsafe { FB } + off + p * 4;
-        p += 1;
-        if p >= (boot.video.width * boot.video.height) as usize / 2 {
-            p = 0;
-        }
-        unsafe { *(ptr as *mut u32) = t & 0xFFFFFF; }
-        for _ in 0 .. 100 {
-            unsafe { llvm_asm!("nop"); }
-        }
-        t += 1;
     }
 }
 
@@ -85,8 +66,11 @@ pub extern "C" fn kernel_main() {
     sched::init();
 
     // Will not get freed until the end of scope, so okay
-    proc::Process::kspawn(task1, 0, "task1").queue();
-    proc::Process::kspawn(task2, 0, "task2").queue();
+    let mut p0 = proc::Process::kspawn(task1, 0, "task1");
+    let mut p1 = proc::Process::kspawn(task2, 0, "task1");
+
+    sched::queue(&mut p0);
+    sched::queue(&mut p1);
     //let mut proc = Process::new_kernel();
     //proc.spawn(task1 as usize, 0).unwrap();
     //proc.spawn(task2 as usize, 0).unwrap();
